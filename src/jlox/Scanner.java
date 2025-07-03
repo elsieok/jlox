@@ -1,11 +1,11 @@
-package lox;
+package jlox;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static lox.TokenType.*;
+import static jlox.TokenType.*;
 
 public class Scanner {
     private final String source;
@@ -93,7 +93,7 @@ public class Scanner {
                 } else if (isAlpha(c)){
                     identifier();
                 } else {
-                    Lox.error(line, "Unexpected character.");
+                    jlox.error(line, "Unexpected character.");
                 }
             }
         }
@@ -115,7 +115,7 @@ public class Scanner {
 
         while (level > 0) {
             if (isAtEnd()) {
-                Lox.error(line, "Unterminated comment.");
+                jlox.error(line, "Unterminated comment.");
                 return;
             }
 
@@ -140,7 +140,7 @@ public class Scanner {
         }
 
         if (isAtEnd()) {
-            Lox.error(line, "Unterminated string.");
+            jlox.error(line, "Unterminated string.");
             return;
         }
 

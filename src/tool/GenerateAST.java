@@ -16,18 +16,12 @@ public class GenerateAST {
             "Binary   : Expr left, Token operator, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
-<<<<<<< HEAD
-=======
             "Ternary : Expr left, Token op1, Expr mid, Token op2, Expr right",
->>>>>>> 2950143 (parsing expressions done + challenges finished)
             "Unary    : Token operator, Expr right"
         ));
     }
 
-<<<<<<< HEAD
-=======
     @SuppressWarnings("ConvertToTryWithResources")
->>>>>>> 2950143 (parsing expressions done + challenges finished)
     private static void defineAST (String outputDir, String baseName, List<String> types) throws IOException {
         String path = outputDir + "/" + baseName + ".java";
         PrintWriter writer = new PrintWriter(path, "UTF-8");

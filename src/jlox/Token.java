@@ -13,10 +13,7 @@ public class Token {
         this.line = line;
     }
 
-<<<<<<< HEAD
-=======
     @Override
->>>>>>> 2950143 (parsing expressions done + challenges finished)
     public String toString() {
         return type + " " + lexeme + " " + literal;
     }

@@ -1,20 +1,13 @@
 package jlox;
 
-<<<<<<< HEAD
-import java.util.List;
-=======
 // import java.util.List;
->>>>>>> 2950143 (parsing expressions done + challenges finished)
 
 abstract class Expr {
     interface Visitor<R> {
         R visitBinaryExpr(Binary expr);
         R visitGroupingExpr(Grouping expr);
         R visitLiteralExpr(Literal expr);
-<<<<<<< HEAD
-=======
         R visitTernaryExpr(Ternary expr);
->>>>>>> 2950143 (parsing expressions done + challenges finished)
         R visitUnaryExpr(Unary expr);
     }
 
@@ -61,8 +54,6 @@ abstract class Expr {
         final Object value;
     }
 
-<<<<<<< HEAD
-=======
     static class Ternary extends Expr {
         Ternary(Expr left, Token op1, Expr mid, Token op2, Expr right) {
             this.left = left;
@@ -84,7 +75,6 @@ abstract class Expr {
         final Expr right;
     }
 
->>>>>>> 2950143 (parsing expressions done + challenges finished)
     static class Unary extends Expr {
         Unary(Token operator, Expr right) {
             this.operator = operator;

@@ -66,8 +66,15 @@ public class Scanner {
             case '.' -> addToken(DOT);
             case '-' -> addToken(MINUS);
             case '+' -> addToken(PLUS);
+<<<<<<< HEAD
             case ';' -> addToken(SEMICOLON);
             case '*' -> addToken(STAR);
+=======
+            case ':' -> addToken(COLON);
+            case ';' -> addToken(SEMICOLON);
+            case '*' -> addToken(STAR);
+            case '?' -> addToken(QUESTION);
+>>>>>>> 2950143 (parsing expressions done + challenges finished)
             case '!' -> addToken(match('=') ? BANG_EQUAL : BANG);
             case '=' -> addToken(match('=') ? EQUAL_EQUAL : EQUAL);
             case '<' -> addToken(match('=') ? LESS_EQUAL : LESS);
@@ -163,7 +170,14 @@ public class Scanner {
             while (isDigit(peek())) advance();
         }
 
+<<<<<<< HEAD
         addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+=======
+        // addToken(NUMBER, Double.parseDouble(source.substring(start, current)));
+        String text = source.substring(start, current);
+        double value = Double.parseDouble(text);
+        addToken(NUMBER, value);
+>>>>>>> 2950143 (parsing expressions done + challenges finished)
     }
 
     private boolean match(char expected) {
@@ -219,4 +233,8 @@ public class Scanner {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 2950143 (parsing expressions done + challenges finished)
 }

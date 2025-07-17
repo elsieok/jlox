@@ -1,14 +1,37 @@
 package jlox;
 
-class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
 
-    void interpret(Expr expression) {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
+
+    private Environment environment = new Environment();
+
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             jlox.runtimeError(error);
         }
+    }
+
+    // Challenge 8.1: Interpret an expression
+    String interpretExpression(Expr expr) {
+        try {
+            String value = stringify(evaluate(expr));
+            return value;
+        } catch (RuntimeError error) {
+            jlox.runtimeError(error);
+            return null;
+        }
+    }
+
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -80,6 +103,9 @@ class Interpreter implements Expr.Visitor<Object> {
             case EQUAL_EQUAL -> {
                 return isEqual(left, right);
             }
+            case COMMA -> {
+                return right;
+            }
         }
 
         // Unreachable code
@@ -98,7 +124,7 @@ class Interpreter implements Expr.Visitor<Object> {
 
     @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
-        Object left = expr.left;
+        Object left = evaluate(expr.left);
 
         if (isTruthy(left)) {
             return evaluate(expr.mid);
@@ -126,6 +152,41 @@ class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
+    }
+    
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initialiser != null) {
+            value = evaluate(stmt.initialiser);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
     private void checkNumberOperand(Token operator, Object operand) {
         if (operand instanceof Double) return;
         throw new RuntimeError(operator, "Operand must be a number.");
@@ -136,6 +197,23 @@ class Interpreter implements Expr.Visitor<Object> {
         throw new RuntimeError(operator, "Operands must be numbers.");
     }
 
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+    
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
+    }
+    
     private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
@@ -169,6 +247,6 @@ class Interpreter implements Expr.Visitor<Object> {
 
 }
 
-// Challenge 1: Done, extended to support lexographical comparison
-// Challenge 2: Didn't like it, felt inconsistent, would rather an error was raised, and require both operands to be of type string to concatenate
-// Challenge 3: Done, added error, division by zero is undefined
+// Challenge 7.1: Done, extended to support lexographical comparison
+// Challenge 7.2: Didn't like it, felt inconsistent, would rather an error was raised, and require both operands to be of type string to concatenate
+// Challenge 7.3: Done, added error, division by zero is undefined

@@ -40,12 +40,26 @@ public class jlox{
         BufferedReader reader = new BufferedReader(input);
 
         for (;;) { 
-        System.out.print("> ");
-        String line = reader.readLine();
-        if (line == null) break;
-        run(line);
+            System.out.print("> ");
+            String line = reader.readLine();
+            if (line == null) break;
+            if (line.trim().isEmpty()) continue; // skip empty lines
 
-        hadError = false;
+            boolean containsKeyword = false;
+            for (String keyword : Scanner.getKeywords().keySet()) {
+                if (line.contains(keyword)) {
+                    containsKeyword = true;
+                    break;
+                }
+            }
+
+            if (line.endsWith(";") || containsKeyword || line.contains("{") || line.contains("}")) {
+                run(line);
+            } else {
+                runExpression(line); // Challenge 8.1
+            }
+
+            hadError = false;
         }
     }
 
@@ -54,12 +68,12 @@ public class jlox{
         List<Token> tokens = scanner.scanTokens();
 
         Parser parser = new Parser(tokens);
-        Expr expression = parser.parse();
+        List<Stmt> statements = parser.parse();
 
         // stop if there was a syntax error
         if (hadError) return;
 
-        interpreter.interpret(expression);
+        interpreter.interpret(statements);
 
         // // Print the AST for debugging purposes
         // System.out.println(new ASTPrinter().print(expression));
@@ -68,6 +82,23 @@ public class jlox{
         // for (Token token : tokens) {
         // System.out.println(token);
         // }
+    }
+
+    // Challenge 8.1
+    private static void runExpression(String line) {
+        Scanner scanner = new Scanner(line);
+        List<Token> tokens = scanner.scanTokens();
+
+        Parser exprParser = new Parser(tokens);
+        Expr expr = exprParser.parseExpression();
+        if (!hadError && expr != null) {
+            System.out.println("had error " + hadError);
+            Object result = interpreter.interpretExpression(expr);
+            if (result != null) {
+                System.out.println(result);
+            }
+            return;
+        }
     }
 
     static void error(int line, String message) {

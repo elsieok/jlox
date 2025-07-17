@@ -105,7 +105,7 @@ public class Scanner {
         while (peek() != '\n' && !isAtEnd()) advance();
     }
 
-    /* Challenge 4:
+    /* Challenge 4.4:
      * Beyond the finicky logics of peek vs advance, it wasn't too difficult to implement.
      * Drawing from CSCI101, for non-regular languages, we build them using PDA which used a stack to push and pop.
      * Using that same logic, keeping track of the comment level we're in seemed to work best.
@@ -225,4 +225,8 @@ public class Scanner {
         tokens.add(new Token(type, text, literal, line));
     }
 
+    public static Map<String, TokenType> getKeywords() {
+        return keywords;
+    }
+    
 }

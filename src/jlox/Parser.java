@@ -1,5 +1,6 @@
 package jlox;
 
+import java.util.ArrayList;
 import java.util.List;
 import static jlox.TokenType.*;
 
@@ -13,12 +14,75 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
-        try {
-            return expression();
-        } catch (ParseError error) {
-            return null;
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while (!isAtEnd()) {
+            statements.add(declaration());
         }
+
+        return statements;
+    }
+
+    // Challenge 8.1: Parse an expression
+    Expr parseExpression() {
+    try {
+        return expression(); // Start parsing with the `expression()` rule
+    } catch (ParseError error) {
+        return null;
+    }
+}
+
+    private Stmt declaration() {
+        try {
+            if (match(VAR)) return varDeclaration();
+
+            return statement();
+        } catch (ParseError error) {
+            synchronise();
+            return null; // or a dummy statement if needed
+        }
+    }
+
+    private Stmt varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+        
+        Expr initialiser = null;
+        if (match(EQUAL)) {
+            initialiser = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initialiser);
+    }
+
+    private Stmt statement() {
+        if (match(PRINT)) return printStatement();
+        if (match(LEFT_BRACE)) return new Stmt.Block(block());
+
+        return expressionStatement();
+    }
+
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt expressionStatement() {
+        Expr expr = expression();
+        consume(SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
+    }
+
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+        statements.add(declaration());
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
     }
 
     private Expr expression(){
@@ -45,17 +109,35 @@ public class Parser {
     }
 
     private Expr conditional() {
-        Expr expr = equality();
+        Expr expr = assignment();
 
         if (match(QUESTION)) {
             Token op1 = previous();
             Expr mid = expression();
 
-            if (match(COLON)) {
-                Token op2 = previous();
-                Expr right = conditional();
-                expr = new Expr.Ternary(expr, op1, mid, op2, right);
+            // Throw error if ':' is missing
+            Token op2 = consume(COLON, "Expect ':' after '?' expression.");
+            Expr right = conditional();
+            expr = new Expr.Ternary(expr, op1, mid, op2, right);
+            
+        }
+
+        return expr;
+    }
+
+    private Expr assignment() {
+        Expr expr = equality();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
             }
+
+            error(equals, "Invalid assignment target.");
         }
 
         return expr;
@@ -162,6 +244,10 @@ public class Parser {
             return new Expr.Grouping(expr);
         }
 
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
+        }
+
         throw error(peek(), "Expect expression.");
     }
 
@@ -209,7 +295,7 @@ public class Parser {
         return new ParseError();
     }
 
-    @SuppressWarnings({"unused", "incomplete-switch"})
+    @SuppressWarnings({"incomplete-switch"})
     private void synchronise() {
         advance();
 
@@ -227,16 +313,25 @@ public class Parser {
     }
 
 
-    /* NEW GRAMMAR
-     * expression     → comma ;
-     * comma          → conditional ( "," conditional )* ;
-     * conditional    → equality ( "?" expression ":" conditional )? ;
-     * equality       → comparison ( ( "!=" | "==" ) comparison )* ;
-     * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
-     * term           → factor ( ( "-" | "+" ) factor )* ;
-     * factor         → unary ( ( "/" | "*" ) unary )* ;
-     * unary          → ( "!" | "-" ) unary | primary ;
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+    /* GRAMMAR
+     * program        → statement* EOF
+     * declaration    → varDecl | statement
+     * varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
+     * statement      → exprStmt | printStmt | block
+     * printStmt      → "print" expression ";"
+     * exprStmt       → expression ";"
+     * block          → "{" declaration* "}"
+     * 
+     * expression     → comma
+     * comma          → conditional ( "," conditional )*        // Challenge 6.1
+     * conditional    → assignment ( "?" expression ":" conditional )?      // Challenge 6.1
+     * assignment     → IDENTIFIER "=" assignment | equality
+     * equality       → comparison ( ( "!=" | "==" ) comparison )*
+     * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )*
+     * term           → factor ( ( "-" | "+" ) factor )*
+     * factor         → unary ( ( "/" | "*" ) unary )*
+     * unary          → ( "!" | "-" ) unary | primary
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
      */
 
 }

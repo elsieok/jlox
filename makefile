@@ -9,11 +9,10 @@ BIN_DIR = bin
 SOURCES = $(shell find $(SRC_DIR) -name "*.java")
 
 # Default target
-all: build run
+all: gen run
 
-build:
-	$(JAVAC) -d bin $(SOURCES)
-
+gen:
+	java -cp $(BIN_DIR) tool.GenerateAST /Users/elsieok/Documents/Projects/craftingInterpreters/src/jlox
 
 run:
 	java -cp $(BIN_DIR) jlox.jlox
@@ -21,3 +20,4 @@ run:
 # Clean compiled files
 clean:
 	rm -rf $(BIN_DIR)/*
+	$(JAVAC) -d bin $(SOURCES)

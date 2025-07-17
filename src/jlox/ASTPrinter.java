@@ -1,6 +1,6 @@
 package jlox;
 
-class ASTPrinter implements Expr.Visitor<String> {
+abstract class ASTPrinter implements Expr.Visitor<String> {
     String print(Expr expr) {
         return expr.accept(this);
     }
@@ -71,4 +71,5 @@ class ASTPrinter implements Expr.Visitor<String> {
 
     //     System.out.println(new ASTPrinter().print(expression));
     // }
+    
 }

@@ -11,13 +11,23 @@ public class GenerateAST {
             System.err.println("Usage: generate_ast <output directory>");
             System.exit(64);
         }
+        
         String outputDir = args[0];
         defineAST(outputDir, "Expr", Arrays.asList(
+            "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token operator, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
             "Ternary : Expr left, Token op1, Expr mid, Token op2, Expr right",
-            "Unary    : Token operator, Expr right"
+            "Unary    : Token operator, Expr right",
+            "Variable : Token name"
+        ));
+
+        defineAST(outputDir, "Stmt", Arrays.asList(
+            "Block      : List<Stmt> statements",
+            "Expression : Expr expression",
+            "Print      : Expr expression",
+            "Var        : Token name, Expr initialiser"
         ));
     }
 

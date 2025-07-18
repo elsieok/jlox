@@ -8,6 +8,7 @@ abstract class Expr {
         R visitBinaryExpr(Binary expr);
         R visitGroupingExpr(Grouping expr);
         R visitLiteralExpr(Literal expr);
+        R visitLogicalExpr(Logical expr);
         R visitTernaryExpr(Ternary expr);
         R visitUnaryExpr(Unary expr);
         R visitVariableExpr(Variable expr);
@@ -71,13 +72,30 @@ abstract class Expr {
         final Object value;
     }
 
-    static class Ternary extends Expr {
-        Ternary(Expr left, Token op1, Expr mid, Token op2, Expr right) {
+    static class Logical extends Expr {
+        Logical(Expr left, Token operator, Expr right) {
             this.left = left;
-            this.op1 = op1;
-            this.mid = mid;
-            this.op2 = op2;
+            this.operator = operator;
             this.right = right;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor) {
+            return visitor.visitLogicalExpr(this);
+        }
+
+        final Expr left;
+        final Token operator;
+        final Expr right;
+    }
+
+    static class Ternary extends Expr {
+        Ternary(Expr condition, Token op1, Expr thenExpr, Token op2, Expr elseExpr) {
+            this.condition = condition;
+            this.op1 = op1;
+            this.thenExpr = thenExpr;
+            this.op2 = op2;
+            this.elseExpr = elseExpr;
         }
 
         @Override
@@ -85,11 +103,11 @@ abstract class Expr {
             return visitor.visitTernaryExpr(this);
         }
 
-        final Expr left;
+        final Expr condition;
         final Token op1;
-        final Expr mid;
+        final Expr thenExpr;
         final Token op2;
-        final Expr right;
+        final Expr elseExpr;
     }
 
     static class Unary extends Expr {

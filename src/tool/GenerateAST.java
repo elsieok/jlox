@@ -18,16 +18,22 @@ public class GenerateAST {
             "Binary   : Expr left, Token operator, Expr right",
             "Grouping : Expr expression",
             "Literal  : Object value",
-            "Ternary : Expr left, Token op1, Expr mid, Token op2, Expr right",
+            "Logical  : Expr left, Token operator, Expr right",
+            "Ternary : Expr condition, Token op1, Expr thenExpr, Token op2, Expr elseExpr", // Challenge 6.1
             "Unary    : Token operator, Expr right",
             "Variable : Token name"
         ));
 
         defineAST(outputDir, "Stmt", Arrays.asList(
-            "Block      : List<Stmt> statements",
-            "Expression : Expr expression",
-            "Print      : Expr expression",
-            "Var        : Token name, Expr initialiser"
+            "Block        : List<Stmt> statements",
+            "Break        : Token keyword", // Challenge 9.3
+            "Continue     : Token keyword", // Challenge 9.3
+            "Expression   : Expr expression",
+            "ForDesugared : Expr condition, Stmt increment, Stmt body", // Challenge 9.3
+            "If           : Expr condition, Stmt thenBranch," + " Stmt elseBranch",
+            "Print        : Expr expression",
+            "Var          : Token name, Expr initialiser",
+            "While        : Expr condition, Stmt body"
         ));
     }
 

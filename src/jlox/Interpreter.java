@@ -123,13 +123,26 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Object visitTernaryExpr(Expr.Ternary expr) {
+    public Object visitLogicalExpr(Expr.Logical expr) {
         Object left = evaluate(expr.left);
 
-        if (isTruthy(left)) {
-            return evaluate(expr.mid);
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left)) return left;
         } else {
-            return evaluate(expr.right);
+        if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr.right);
+    }
+
+    @Override
+    public Object visitTernaryExpr(Expr.Ternary expr) {
+        Object condition = evaluate(expr.condition);
+
+        if (isTruthy(condition)) {
+            return evaluate(expr.thenExpr);
+        } else {
+            return evaluate(expr.elseExpr);
         }
     }
 
@@ -163,6 +176,60 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
 
+    @Override // Challenge 9.3
+    public Void visitBreakStmt(Stmt.Break stmt) {
+        throw new BreakException();
+    }
+
+    @Override // Challenge 9.3
+    public Void visitContinueStmt(Stmt.Continue stmt) {
+        throw new ContinueException();
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    @Override
+    public Void visitForDesugaredStmt(Stmt.ForDesugared stmt) {
+        try {
+            while (true) {
+                if (!isTruthy(evaluate(stmt.condition))) break;
+
+                try {
+                    execute(stmt.body);
+                } catch (ContinueException ex) {
+                    // continue to increment
+                }
+
+                execute(stmt.increment);
+            }
+        } catch (BreakException ex) {
+            // break out of loop
+        }
+
+        return null;
+    }
+
+    @Override 
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+    
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = null;
@@ -173,17 +240,13 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         environment.define(stmt.name.lexeme, value);
         return null;
     }
-
+    
     @Override
-    public Void visitExpressionStmt(Stmt.Expression stmt) {
-        evaluate(stmt.expression);
-        return null;
-    }
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
 
-    @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        Object value = evaluate(stmt.expression);
-        System.out.println(stringify(value));
         return null;
     }
 

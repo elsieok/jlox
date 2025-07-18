@@ -33,6 +33,8 @@ public class Scanner {
         keywords.put("true",   TRUE);
         keywords.put("var",    VAR);
         keywords.put("while",  WHILE);
+        keywords.put("break",  BREAK); // Challenge 9.3
+        keywords.put("continue", CONTINUE); // Challenge 9.3
     }
 
     Scanner(String source) {

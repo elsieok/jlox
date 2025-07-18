@@ -24,7 +24,7 @@ abstract class ASTPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitTernaryExpr(Expr.Ternary expr) {
-        return parenthesiseT(expr.op1.lexeme, expr.op2.lexeme, expr.left, expr.mid, expr.right);
+        return parenthesiseT(expr.op1.lexeme, expr.op2.lexeme, expr.condition, expr.thenExpr, expr.elseExpr);
     }
     
     @Override

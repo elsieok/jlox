@@ -38,6 +38,7 @@ public class Parser {
 
     private Stmt declaration() {
         try {
+            if (match(FUN)) return funDeclaration("function");
             if (match(VAR)) return varDeclaration();
 
             return statement();
@@ -45,6 +46,30 @@ public class Parser {
             synchronise();
             return null; // or a dummy statement if needed
         }
+    }
+
+    private Stmt funDeclaration(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+                
+            } while (match(COMMA));
+        }
+        
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+
+        return new Stmt.Function(name, parameters, body);
     }
 
     private Stmt varDeclaration() {
@@ -65,6 +90,7 @@ public class Parser {
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
 
@@ -161,6 +187,19 @@ public class Parser {
         return new Stmt.Print(value);
     }
 
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after return value.");
+
+        return new Stmt.Return(keyword, value);
+    }
+    
     private Stmt whileStatement() {
         consume(LEFT_PAREN, "Expect '(' after 'if'.");
         Expr condition = expression();
@@ -325,7 +364,7 @@ public class Parser {
     }
 
     private Expr factor() {
-        if (match(SLASH, STAR)) {
+        if (match(STAR, SLASH, PERCENT)) {
             Token operator = previous();
             error(operator, "Missing left-hand operand before " + operator.lexeme);
             unary(); // discard right-hand side
@@ -334,7 +373,7 @@ public class Parser {
 
         Expr expr = unary();
 
-        while (match(SLASH, STAR)) {
+        while (match(STAR, SLASH, PERCENT)) {
             Token operator = previous();
             Expr right = unary();
             expr = new Expr.Binary(expr, operator, right);
@@ -350,10 +389,66 @@ public class Parser {
             return new Expr.Unary(operator, right);
         }
 
-        return primary();
+        return call();
+    }
+
+    private Expr call() {
+        Expr expr = primary();
+
+        while (true) { 
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (arguments.size() >= 255) {
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(conditional());
+            } while (match(COMMA));
+        }
+
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
+
+    }
+
+    private Expr functionExpr(String kind) {
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " expresion.");
+        List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+                
+            } while (match(COMMA));
+        }
+        
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
+
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+
+        return new Expr.Function(parameters, body);
     }
 
     private Expr primary() {
+        if (match(FUN)) return functionExpr("function");
+
         if (match(NUMBER, STRING)) {
             return new Expr.Literal(previous().literal);
         }
@@ -437,32 +532,43 @@ public class Parser {
     }
 
 
+
     /* GRAMMAR
-     * program        → statement* EOF
-     * declaration    → varDecl | statement
-     * varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
-     * statement      → breakStmt | continueStmt | exprStmt | forStmt | ifStmt | printStmt | whileStmt | block
-     * breakStmt      → "break" ";"
-     * continueStmt   → "continue" ";"
-     * exprStmt       → expression ";"
-     * forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression ")" statement
-     * ifStmt         → "if" "(" expression ")" statement ( "else" statement )?
-     * printStmt      → "print" expression ";"
-     * whileStmt      → "while" "(" expression ")" statement
-     * block          → "{" declaration* "}"
+     * program         → declaration* EOF
+     * declaration     → funDecl | varDecl | statement
+     * funDecl         → "fun" IDENTIFIER "(" parameters? ")" block
+     * parameters      → IDENTIFIER ( "," IDENTIFIER )*
+     * varDecl         → "var" IDENTIFIER ( "=" expression )? ";"
+     * statement       → breakStmt | continueStmt | exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
+     * breakStmt       → "break" ";"
+     * continueStmt    → "continue" ";"
+     * exprStmt        → expression ";"
+     * forStmt         → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression ")" statement
+     * ifStmt          → "if" "(" expression ")" statement ( "else" statement )?
+     * printStmt       → "print" expression ";"
+     * returnStmt      → "return" expression? ";"
+     * whileStmt       → "while" "(" expression ")" statement
+     * block           → "{" declaration* "}"
      * 
-     * expression     → comma
-     * comma          → conditional ( "," conditional )*        // Challenge 6.1
-     * conditional    → assignment ( "?" expression ":" conditional )?      // Challenge 6.1
-     * assignment     → IDENTIFIER "=" assignment | logic_or
-     * logic_or       → logic_and ( "or" logic_and )*
-     * logic_and      → equality ( "and" equality )*
-     * equality       → comparison ( ( "!=" | "==" ) comparison )*
-     * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )*
-     * term           → factor ( ( "-" | "+" ) factor )*
-     * factor         → unary ( ( "/" | "*" ) unary )*
-     * unary          → ( "!" | "-" ) unary | primary
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER
+     * expression      → comma
+     * comma           → conditional ( "," conditional )*      // Challenge 6.1
+     * conditional     → assignment ( "?" expression ":" conditional )?      // Challenge 6.1
+     * assignment      → IDENTIFIER "=" assignment | logic_or
+     * logic_or        → logic_and ( "or" logic_and )*
+     * logic_and       → equality ( "and" equality )*
+     * equality        → comparison ( ( "!=" | "==" ) comparison )*
+     * comparison      → term ( ( ">" | ">=" | "<" | "<=" ) term )*
+     * term            → factor ( ( "+" | "-" ) factor )*
+     * factor          → unary ( ( "*" | "/" | "%" ) unary )*
+     * unary           → ( "!" | "-" ) unary | call
+     * call            → primary ( "(" arguments? ")" )*
+     * arguments       → conditional ( "," conditional )*      // had to change this to stop the comma rule from messing up argument parsing
+     * functionExpr    → "fun" "(" parameters? ")" block      // Challenge 10.2
+     * primary         → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER
+     * 
+     * ?: optional, zero or one occurance
+     * *: zero or more occurances
+     * +: one or more occurances
      */
 
 }

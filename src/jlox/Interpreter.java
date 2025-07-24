@@ -1,10 +1,31 @@
 package jlox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals;
+
+    Interpreter() {
+        globals.define("class", new jloxCallable() {
+            @Override
+            public int arity() {
+                return 0;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double)System.currentTimeMillis() / 1000.0;
+            }
+
+            @Override
+            public String toString() {
+                return "<native fn>";
+            }
+        });
+    }
 
     void interpret(List<Stmt> statements) {
         try {
@@ -41,9 +62,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object right = evaluate(expr.right);
 
         switch (expr.operator.type) {
-            case MINUS -> {
+            case STAR -> {
                 checkNumberOperands(expr.operator, left, right);
-                return (double)left - (double)right;
+                return (double)left * (double)right;
             }
             case SLASH -> {
                 checkNumberOperands(expr.operator, left, right);
@@ -51,10 +72,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     throw new RuntimeError(expr.operator, "Division by zero is undefined.");
                 }
                 return (double)left / (double)right;
-            }
-            case STAR -> {
-                checkNumberOperands(expr.operator, left, right);
-                return (double)left * (double)right;
             }
             case PLUS -> {
                 if (left instanceof Double && right instanceof Double) {
@@ -64,6 +81,16 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return (String)left + (String)right;
                 }
                 throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
+            }
+            case MINUS -> {
+                checkNumberOperands(expr.operator, left, right);
+                return (double)left - (double)right;
+            }
+            case PERCENT -> {
+                if ((double) right == 0) {
+                    throw new RuntimeError(expr.operator, "Modulo by zero is undefined.");
+                }
+                return (double)left % (double)right;
             }
             case GREATER -> {
                 if (left instanceof String && right instanceof String) {
@@ -110,6 +137,35 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
         // Unreachable code
         return null;
+    }
+
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof jloxCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+        }
+
+        jloxCallable function = (jloxCallable)callee;
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren, "Expected " + function.arity() + " arguments but got " + arguments.size() + ".");
+        }
+
+        return function.call(this, arguments);
+    }
+
+    // Challenge 10.2
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        FunctionDeclarationAdapter someFunctionExpr = new FunctionDeclarationAdapter(expr);
+        jloxFunction function = new jloxFunction(someFunctionExpr, environment);
+        return function;
     }
 
     @Override
@@ -193,6 +249,15 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitFunctionStmt(Stmt.Function stmt) {
+        // Challenge 10.2, syntax changed from original
+        FunctionDeclarationAdapter someFunctionExpr = new FunctionDeclarationAdapter(stmt);
+        jloxFunction function = new jloxFunction(someFunctionExpr, environment);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
+
+    @Override
     public Void visitForDesugaredStmt(Stmt.ForDesugared stmt) {
         try {
             while (true) {
@@ -231,10 +296,20 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
-    public Void visitVarStmt(Stmt.Var stmt) {
+    public Void visitReturnStmt(Stmt.Return stmt) {
         Object value = null;
+        if (stmt.value != null) value = evaluate(stmt.value);
+
+        throw new Return(value);
+    }
+    
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value;
         if (stmt.initialiser != null) {
             value = evaluate(stmt.initialiser);
+        } else {
+            value = Environment.uninitialisedValue();
         }
 
         environment.define(stmt.name.lexeme, value);

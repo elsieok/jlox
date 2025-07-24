@@ -65,8 +65,9 @@ public class Scanner {
             case '}' -> addToken(RIGHT_BRACE);
             case ',' -> addToken(COMMA);
             case '.' -> addToken(DOT);
-            case '-' -> addToken(MINUS);
             case '+' -> addToken(PLUS);
+            case '-' -> addToken(MINUS);
+            case '%' -> addToken(PERCENT);
             case ':' -> addToken(COLON);
             case ';' -> addToken(SEMICOLON);
             case '*' -> addToken(STAR);
@@ -96,7 +97,7 @@ public class Scanner {
                 } else if (isAlpha(c)){
                     identifier();
                 } else {
-                    jlox.error(line, "Unexpected character.");
+                    jlox.error(line, "Unexpected character: '" + c + "'.");
                 }
             }
         }
@@ -197,7 +198,7 @@ public class Scanner {
 
     private boolean isAlpha(char c) {
         return (c >= 'a' && c <= 'z') ||
-                (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
                 c == '_';
     }
 

@@ -6,7 +6,7 @@ import java.util.Map;
 class Environment {
     final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
-    private static final Object UNINITIALIZED = new Object(); // Sentinel value (Challenge 8.2)
+    private static final Object UNINITIALISED = new Object(); // Sentinel value (Challenge 8.2)
 
     Environment() {
         enclosing = null;
@@ -17,11 +17,7 @@ class Environment {
     }
 
     void define(String name, Object value) {
-        if (value == null) {
-        values.put(name, UNINITIALIZED);
-    } else {
         values.put(name, value);
-    }
     }
 
     void assign(Token name, Object value) {
@@ -42,7 +38,7 @@ class Environment {
         
         if (values.containsKey(name.lexeme)) {
             Object value = values.get(name.lexeme);
-            if (value == UNINITIALIZED) {
+            if (value == UNINITIALISED) {
                 throw new RuntimeError(name, "Variable '" + name.lexeme + "' is not initialized.");
             }
             return values.get(name.lexeme);
@@ -51,6 +47,10 @@ class Environment {
         if (enclosing != null) return enclosing.get(name);
 
         throw new RuntimeError(name, "Undefined variable '" + name.lexeme + "'.");
+    }
+    
+    public static Object uninitialisedValue() {
+        return UNINITIALISED;
     }
     
 }

@@ -16,10 +16,12 @@ public class GenerateAST {
         defineAST(outputDir, "Expr", Arrays.asList(
             "Assign   : Token name, Expr value",
             "Binary   : Expr left, Token operator, Expr right",
+            "Call     : Expr callee, Token paren, List<Expr> arguments",
+            "Function : List<Token> params, List<Stmt> body",
             "Grouping : Expr expression",
             "Literal  : Object value",
             "Logical  : Expr left, Token operator, Expr right",
-            "Ternary : Expr condition, Token op1, Expr thenExpr, Token op2, Expr elseExpr", // Challenge 6.1
+            "Ternary  : Expr condition, Token op1, Expr thenExpr, Token op2, Expr elseExpr", // Challenge 6.1
             "Unary    : Token operator, Expr right",
             "Variable : Token name"
         ));
@@ -30,8 +32,10 @@ public class GenerateAST {
             "Continue     : Token keyword", // Challenge 9.3
             "Expression   : Expr expression",
             "ForDesugared : Expr condition, Stmt increment, Stmt body", // Challenge 9.3
+            "Function     : Token name, List<Token> params," + " List<Stmt> body",
             "If           : Expr condition, Stmt thenBranch," + " Stmt elseBranch",
             "Print        : Expr expression",
+            "Return       : Token keyword, Expr value",
             "Var          : Token name, Expr initialiser",
             "While        : Expr condition, Stmt body"
         ));

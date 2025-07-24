@@ -18,10 +18,10 @@ fullgen:
 	$(JAVAC) -d bin src/tool/GenerateAST.java
 	java -cp $(BIN_DIR) tool.GenerateAST /Users/elsieok/Documents/Projects/craftingInterpreters/src/jlox
 
-runP:
+runp:
 	java -cp $(BIN_DIR) jlox.jlox
 
-runF:
+runf:
 	java -cp $(BIN_DIR) jlox.jlox testFile.jlox
 
 # Clean compiled files

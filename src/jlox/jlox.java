@@ -46,8 +46,8 @@ public class jlox{
             if (line.trim().isEmpty()) continue; // skip empty lines
 
             boolean containsKeyword = false;
-            for (String keyword : Scanner.getKeywords().keySet()) {
-                if (line.contains(keyword)) {
+            for (String token : line.split("\\s+")) {
+                if (Scanner.isKeyword(token)) {
                     containsKeyword = true;
                     break;
                 }
@@ -97,7 +97,6 @@ public class jlox{
             if (result != null) {
                 System.out.println(result);
             }
-            return;
         }
     }
 

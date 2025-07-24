@@ -228,8 +228,8 @@ public class Scanner {
         tokens.add(new Token(type, text, literal, line));
     }
 
-    public static Map<String, TokenType> getKeywords() {
-        return keywords;
+    public static boolean isKeyword(String lexeme) {
+        return keywords.containsKey(lexeme);
     }
     
 }

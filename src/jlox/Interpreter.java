@@ -1,12 +1,25 @@
 package jlox;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
     private Environment environment = globals;
+    private final Map<Expr, Integer> locals = new HashMap<>();
+
+    private static class BreakException extends RuntimeException {
+    // This exception is used to break out of loops in the interpreter.
+    // It does not carry any additional information.
+    }
+
+    private static class ContinueException extends RuntimeException {
+    // This exception is used to continue to the next iteration of loops in the interpreter.
+    // It does not carry any additional information.
+    }
 
     Interpreter() {
         globals.define("class", new jloxCallable() {
@@ -51,7 +64,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
+
+        Integer distance =locals.get(expr);
+        if (distance != null) {
+            environment.assignAt(distance, expr.name, value);
+        } else {
+            globals.assign(expr.name, value);
+        }
+        
         return value;
     }
 
@@ -223,7 +243,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
+        return lookUpVariable(expr.name, expr);
     }
     
     @Override
@@ -249,32 +269,30 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitForDesugaredStmt(Stmt.ForDesugared stmt) {
+        try {
+            while (isTruthy(evaluate(stmt.condition))) {
+                try {
+                    execute(stmt.body);
+                    execute(stmt.increment);
+                } catch (ContinueException e) {
+                    execute(stmt.increment);
+                }
+
+            }
+            
+        } catch (BreakException e) {
+        }
+
+        return null;
+    }
+
+    @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
         // Challenge 10.2, syntax changed from original
         FunctionDeclarationAdapter someFunctionExpr = new FunctionDeclarationAdapter(stmt);
         jloxFunction function = new jloxFunction(someFunctionExpr, environment);
         environment.define(stmt.name.lexeme, function);
-        return null;
-    }
-
-    @Override
-    public Void visitForDesugaredStmt(Stmt.ForDesugared stmt) {
-        try {
-            while (true) {
-                if (!isTruthy(evaluate(stmt.condition))) break;
-
-                try {
-                    execute(stmt.body);
-                } catch (ContinueException ex) {
-                    // continue to increment
-                }
-
-                execute(stmt.increment);
-            }
-        } catch (BreakException ex) {
-            // break out of loop
-        }
-
         return null;
     }
 
@@ -318,8 +336,16 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     @Override
     public Void visitWhileStmt(Stmt.While stmt) {
-        while (isTruthy(evaluate(stmt.condition))) {
-            execute(stmt.body);
+        try {
+            while (isTruthy(evaluate(stmt.condition))) {
+                try {
+                    execute(stmt.body);
+                } catch (ContinueException ex) {
+                // continue
+                }
+            } 
+        } catch (BreakException ex) {
+            // break out of loop
         }
 
         return null;
@@ -354,6 +380,19 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
+    }
+
+    private Object lookUpVariable(Token name, Expr expr) {
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            return environment.getAt(distance, name.lexeme);
+        } else {
+            return globals.get(name);
+        }
     }
 
     private boolean isTruthy(Object object) {

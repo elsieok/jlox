@@ -1,32 +1,11 @@
-fun thrice(f) {
-  return fun(x) {
-    return f(f(f(x)));
-  };
-}
-
-var addTwo = fun(x) {
-  return x + 2;
-};
-
-var tripleAdd = thrice(addTwo);
-print tripleAdd(5); // expect 11
-
-// -----------------------------------------
-
-var result = fun(start) {
-  var sum = start;
-  
-  for (var i = 0; i < 3; i = i + 1) {
-    sum = sum + fun(x) {
-      if (x % 2 == 0) {
-        return x * 2;
-      } else {
-        return x + 3;
-      }
-    }(i); // anonymous function called immediately
+var a = "global";
+{
+  fun showA() {
+    print a;
   }
 
-  return sum;
-}(10);
-
-print result; // expect 10 + f(0) + f(1) + f(2) → 10 + 0*2 + 1+3 + 2*2 = 10 + 0 + 4 + 4 = 18
+  showA();
+  var a = "block";
+  showA();
+  // print a;
+}

@@ -73,6 +73,12 @@ public class jlox{
         // stop if there was a syntax error
         if (hadError) return;
 
+        Resolver resolver = new Resolver(interpreter);
+        resolver.resolve(statements);
+
+        // stop if there was a resolution error
+        if (hadError) return;
+
         interpreter.interpret(statements);
 
         // // Print the AST for debugging purposes
@@ -92,7 +98,6 @@ public class jlox{
         Parser exprParser = new Parser(tokens);
         Expr expr = exprParser.parseExpression();
         if (!hadError && expr != null) {
-            System.out.println("had error " + hadError);
             Object result = interpreter.interpretExpression(expr);
             if (result != null) {
                 System.out.println(result);

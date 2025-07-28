@@ -11,7 +11,6 @@ public class Parser {
 
     private final List<Token> tokens;
     private int current = 0;
-
     private int loopDepth = 0; // Track loop depth for break/continue
 
     Parser(List<Token> tokens){
@@ -103,9 +102,8 @@ public class Parser {
             error(previous(), "Cannot use 'break' outside of a loop.");
         }
 
-        Token keyword = previous();
         consume(SEMICOLON, "Expect ';' after 'break'.");
-        return new Stmt.Break(keyword);
+        return new Stmt.Break();
     }
 
     // Challenge 9.3: Implement continue statement
@@ -114,9 +112,8 @@ public class Parser {
             error(previous(), "Cannot use 'continue' outside of a loop.");
         }
 
-        Token keyword = previous();
         consume(SEMICOLON, "Expect ';' after 'continue'.");
-        return new Stmt.Continue(keyword);
+        return new Stmt.Continue();
     }
 
     private Stmt expressionStatement() {
@@ -148,23 +145,25 @@ public class Parser {
             increment = expression();
         }
         consume(RIGHT_PAREN, "Expect ')' after condition.");
-
+        
         loopDepth++;
         Stmt body = statement();
         loopDepth--;
 
-        // Challenge 9.3: Desugar for loop to access increment to allow for proper continue
-        if (condition == null) condition = new Expr.Literal(true); // Infinite loop if no condition
-        
-        Stmt incrementStmt = (increment != null ? new Stmt.Expression(increment) : new Stmt.Block(Collections.emptyList()));
-
-        Stmt loop = new Stmt.ForDesugared(condition, incrementStmt, body);
-
-        if (initialiser != null) {
-            return new Stmt.Block(Arrays.asList(initialiser, loop));
+        if (condition == null) {
+            condition = new Expr.Literal(true);
         }
 
-        return loop;
+        Stmt incrementStmt = (increment != null) ? new Stmt.Expression(increment) : new Stmt.Block(Collections.emptyList());
+
+        body = new Stmt.ForDesugared(condition, incrementStmt, body);
+
+        if (initialiser != null) {
+            body = new Stmt.Block(Arrays.asList(initialiser, body));
+        }
+
+        return body;
+
     }
 
     private Stmt ifStatement() {
@@ -208,8 +207,8 @@ public class Parser {
         loopDepth++;
         Stmt body = statement();
         loopDepth--;
-
         return new Stmt.While(condition, body);
+
     }
 
     private List<Stmt> block() {

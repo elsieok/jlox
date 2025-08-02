@@ -5,12 +5,14 @@ import java.util.Map;
 
 class jloxClass extends jloxInstance implements jloxCallable {
     final String name;
+    final jloxClass superclass;
     private final Map<String, jloxFunction> methods;
     private final jloxClass metaclass;
 
-    jloxClass(String name, Map<String, jloxFunction> methods, jloxClass metaclass) {
+    jloxClass(String name, jloxClass superclass, Map<String, jloxFunction> methods, jloxClass metaclass) {
         super(metaclass);
         this.name = name;
+        this.superclass = superclass;
         this.methods = methods;
         this.metaclass = metaclass;
     }
@@ -18,6 +20,10 @@ class jloxClass extends jloxInstance implements jloxCallable {
     jloxFunction findMethod(String name) {
         if (methods.containsKey(name)) {
             return methods.get(name);
+        }
+
+        if (superclass != null) {
+            return superclass.findMethod(name);
         }
 
         return null;

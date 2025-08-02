@@ -22,7 +22,7 @@ class jloxFunction implements jloxCallable{
     }
 
     jloxFunction bind(jloxInstance instance) {
-        Environment environment = new Environment();
+        Environment environment = new Environment(closure);
         environment.define("this", instance);
         return new jloxFunction(declaration, environment, isInitialiser, isGetter);
     }

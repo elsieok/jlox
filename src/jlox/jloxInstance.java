@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 class jloxInstance {
-    private jloxClass klass;
+    private final jloxClass klass;
     private final Map<String, Object> fields = new HashMap<>();
 
     jloxInstance(jloxClass klass) {

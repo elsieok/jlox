@@ -50,6 +50,13 @@ public class Parser {
 
     private Stmt classDeclaration() {
         Token name = consume(IDENTIFIER, "Expect class name.");
+
+        Expr.Variable superclass = null;
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name");
+            superclass = new Expr.Variable(previous());
+        }
+
         consume(LEFT_BRACE, "Expect '{' before class body.");
 
         List<Stmt.Function> methods = new ArrayList<>();
@@ -65,7 +72,7 @@ public class Parser {
 
         consume(RIGHT_BRACE, "Expect '}' after class body.");
 
-        return new Stmt.Class(name, staticMethods, methods);
+        return new Stmt.Class(name, superclass, staticMethods, methods);
     }
 
     private Stmt.Function function(String kind) {
@@ -498,6 +505,13 @@ public class Parser {
             return new Expr.Grouping(expr);
         }
 
+        if (match(SUPER)) {
+            Token keyword = previous();
+            consume(DOT, "Expect '.' after 'super'.");
+            Token method = consume(IDENTIFIER, "Expect superclass method name.");
+            return new Expr.Super(keyword, method);
+        }
+
         throw error(peek(), "Expect expression.");
     }
 
@@ -567,7 +581,7 @@ public class Parser {
     /* GRAMMAR
      * program        → declaration* EOF
      * declaration    → classDecl | funDecl | varDecl | statement
-     * classDecl      → "class" IDENTIFIER "{" function* "}"
+     * classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )? "{" function* "}"
      * funDecl        → "fun" function
      * function       → "static"? IDENTIFIER ( "(" parameters? ")" )? block // challenge 12.1
      * parameters     → IDENTIFIER ( "," IDENTIFIER )*
@@ -597,7 +611,7 @@ public class Parser {
      * call           → primary ( "(" arguments? ")" | "." IDENTIFIER )*
      * arguments      → conditional ( "," conditional )*      // had to change this to stop the comma rule from messing up argument parsing
      * functionExpr   → "fun" "(" parameters? ")" block      // Challenge 10.2
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER | "super" "." IDENTIFIER
      * 
      * ? : optional, zero or one occurance
      * * : zero or more occurances

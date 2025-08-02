@@ -1,61 +1,156 @@
-class Test {
-  // Constructor
-  init(value) {
-    this.value = value;
+// === CLASS INHERITANCE & METHOD OVERRIDING ===
+class Animal {
+  speak() {
+    print "Animal noise";
   }
-
-  // Regular instance method
-  regularMethod() {
-    return "regular method called with value " + this.value;
-  }
-
-  // Regular instance getter (parameterless method)
-  regularGetter {
-    return "regular getter called with value " + this.value;
-  }
-
-  // Static method
-  static staticMethod() {
-    return "static method called";
-  }
-
-  // Static getter (parameterless static method)
-  static staticGetter {
-    return "static getter called";
-  }
-
-  // The following lines should cause an error if your interpreter disallows method/getter name conflicts
-
-  // Uncomment to test name conflict error on instance side:
-  /*
-  conflictName() {
-    return "method";
-  }
-
-  conflictName {
-    return "getter";
-  }
-  */
-
-  // Uncomment to test name conflict error on static side:
-  /*
-  static conflictStatic() {
-    return "static method";
-  }
-
-  static conflictStatic {
-    return "static getter";
-  }
-  */
 }
 
-print Test.staticMethod();      // static method called
-print Test.staticGetter;        // static getter called
+class Dog < Animal {
+  speak() {
+    super.speak();
+    print "Woof!";
+  }
+}
 
-var obj = Test("42");
-print obj.regularMethod();      // regular method called with value 42
-print obj.regularGetter;        // regular getter called with value 42
+Dog().speak(); // Should print "Animal noise" then "Woof!"
 
-// Change the instance value and re-check getter reflects change
-obj.value = "100";
-print obj.regularGetter;        // regular getter called with value 100
+// === INIT & THIS ===
+class Person {
+  init(name) {
+    this.name = name;
+  }
+
+  sayName() {
+    print this.name;
+  }
+}
+
+var p = Person("Elsie");
+p.sayName(); // Elsie
+
+// === STATIC METHODS & STATIC GETTERS ===
+class Util {
+  static greet() {
+    print "Hello from static!";
+  }
+
+  static time {
+    return "noon";
+  }
+}
+
+Util.greet();       // Hello from static!
+print Util.time;    // noon
+
+// === INSTANCE GETTERS ===
+class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  area {
+    return 3.14 * this.radius * this.radius;
+  }
+}
+
+var c = Circle(2);
+print c.area; // Should print 12.56
+
+// === ANONYMOUS FUNCTIONS & HIGHER-ORDER FUNCTIONS ===
+fun makeCounter() {
+  var count = 0;
+  return fun() {
+    count = count + 1;
+    print count;
+  };
+}
+
+var counter = makeCounter();
+counter(); // 1
+counter(); // 2
+
+// === BREAK / CONTINUE ===
+var i = 0;
+while (i < 10) {
+  i = i + 1;
+
+  if (i == 3) {
+    continue;
+  }
+
+  if (i == 6) {
+    break;
+  }
+
+  print i; // Should print 1, 2, 4, 5
+}
+
+// === FUNCTION EXPRESSIONS ===
+var say = fun(msg) {
+  print msg;
+};
+
+say("Function expressions are fun!");
+
+// === RETURN VALUES ===
+fun add(a, b) {
+  return a + b;
+}
+
+print add(2, 3); // 5
+
+// === CLOSURES ===
+fun makeAdder(x) {
+  return fun(y) {
+    return x + y;
+  };
+}
+
+var addFive = makeAdder(5);
+print addFive(10); // 15
+
+// === NESTED SCOPES ===
+{
+  var outer = "outside";
+  {
+    var inner = "inside";
+    print outer + " and " + inner; // outside and inside
+  }
+  // print inner; // should error if uncommented
+}
+
+// === DUPLICATE METHODS (should error) ===
+// class Oops {
+//   method() {}
+//   method() {} // Uncomment to test error
+// }
+
+// === STATIC & INSTANCE NAMING COLLISIONS ===
+class Weird {
+  static name() {
+    print "Static name";
+  }
+
+  name() {
+    print "Instance name";
+  }
+}
+
+var w = Weird();
+w.name();        // Instance name
+Weird.name();    // Static name
+
+// === GETTER COLLISIONS ===
+//class Shadow {
+//  val {
+//    return "getter";
+//  }
+//
+//  val() {
+//    print "method";
+//  }
+//}
+
+// Shadow().val(); // Uncomment to test getter-method collision (should error or override depending on implementation)
+
+print "=== END OF PART II TEST SUITE ===";

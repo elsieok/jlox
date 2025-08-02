@@ -258,6 +258,22 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitSuperExpr(Expr.Super expr) {
+        int distance = locals.get(expr);
+        jloxClass superclass = (jloxClass)environment.getAt(distance, "super");
+
+        jloxInstance object = (jloxInstance)environment.getAt(distance - 1, "this");
+
+        jloxFunction method = superclass.findMethod(expr.method.lexeme);
+
+        if (method == null) {
+            throw new RuntimeError(expr.method, "Undefined property '" + expr.method.lexeme + "'.");
+        }
+
+        return method.bind(object);
+    }
+
+    @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
         Object condition = evaluate(expr.condition);
 
@@ -310,8 +326,20 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        Object superclass = null;
+        if (stmt.superclass != null) {
+            superclass = evaluate(stmt.superclass);
+            if (!(superclass instanceof jloxClass)) {
+                throw new RuntimeError(stmt.superclass.name, "Superclass must be a class.");
+            }
+        }
+
         environment.define(stmt.name.lexeme, null);
 
+        if (stmt.superclass != null) {
+            environment = new Environment(environment);
+            environment.define("super", superclass);
+        }
 
         // challenge 12.1
         Map<String, jloxFunction> staticMethods = new HashMap<>();
@@ -322,7 +350,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
 
         // challenge 12.1
-        jloxClass metaclass = new jloxClass(stmt.name.lexeme + "Meta", staticMethods, null);
+        jloxClass metaclass = new jloxClass(stmt.name.lexeme + "Meta", null, staticMethods, null);
         // static methods are instance methods on the metaclass
         // static methods on the metaclass are usually empty
         // metaclass's class can be null or point to a base Class class
@@ -334,7 +362,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             methods.put(method.name.lexeme, function);
         }
 
-        jloxClass klass = new jloxClass(stmt.name.lexeme, methods, metaclass);
+        jloxClass klass = new jloxClass(stmt.name.lexeme, (jloxClass)superclass, methods, metaclass);
+
+        if (superclass != null) {
+            environment = environment.enclosing;
+        }
+
         environment.assign(stmt.name, klass);
         return null;
     }

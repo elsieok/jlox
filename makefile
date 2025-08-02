@@ -22,7 +22,10 @@ runp:
 	java -cp $(BIN_DIR) jlox.jlox
 
 runf:
-	java -cp $(BIN_DIR) jlox.jlox testFile.jlox
+	java -cp $(BIN_DIR) jlox.jlox testLoxFile.jlox
+
+runfl:
+	java -cp $(BIN_DIR) jlox.jlox testLibFile.jlox
 
 # Clean compiled files
 clean:

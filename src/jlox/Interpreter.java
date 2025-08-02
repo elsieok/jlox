@@ -8,6 +8,7 @@ import java.util.Map;
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     final Environment globals = new Environment();
+
     private Environment environment = globals;
     private final Map<Expr, Integer> locals = new HashMap<>();
 
@@ -22,7 +23,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     Interpreter() {
-        globals.define("class", new jloxCallable() {
+        globals.define("clock", new jloxCallable() {
             @Override
             public int arity() {
                 return 0;
@@ -38,6 +39,38 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return "<native fn>";
             }
         });
+
+        // String library
+        globals.define("len", new StringLibrary.len());
+        globals.define("substr", new StringLibrary.substr());
+        globals.define("toUpper", new StringLibrary.toUpper());
+        globals.define("toLower", new StringLibrary.toLower());
+        globals.define("split", new StringLibrary.split());
+        globals.define("stringify", new StringLibrary.stringify());
+
+        // Maths library
+        globals.define("PI", MathsLibrary.PI);
+        globals.define("E", MathsLibrary.E);
+        globals.define("sqrt", new MathsLibrary.sqrt());
+        globals.define("pow", new MathsLibrary.pow());
+        globals.define("abs", new MathsLibrary.abs());
+        globals.define("floor", new MathsLibrary.floor());
+        globals.define("ceil", new MathsLibrary.ceil());
+        globals.define("random", new MathsLibrary.random());
+        globals.define("randomInt", new MathsLibrary.randomInt());
+        globals.define("sin", new MathsLibrary.sin());
+        globals.define("cos", new MathsLibrary.cos());
+        globals.define("tan", new MathsLibrary.tan());
+
+        // IO library
+        globals.define("input", new IOLibrary.input());
+        globals.define("prompt", new IOLibrary.inputPrompt());
+        globals.define("readFile", new IOLibrary.readFile());
+        globals.define("writeFile", new IOLibrary.writeFile());
+        globals.define("appendFile", new IOLibrary.appendFile());
+        globals.define("fileExists", new IOLibrary.fileExists());
+        globals.define("deleteFile", new IOLibrary.deleteFile());
+        globals.define("printn", new IOLibrary.printNoNewline());
     }
 
     void interpret(List<Stmt> statements) {

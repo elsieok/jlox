@@ -140,9 +140,38 @@ public class Scanner {
     }
 
     private void string() {
+        StringBuilder value = new StringBuilder();
+
         while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n') line++;
-            advance();
+
+            if (peek() == '\\') {
+                advance();
+
+                if (isAtEnd()) {
+                    jlox.error(line, "Unterminated string.");
+                    return;
+                }
+
+                char escaped = peek();
+                switch (escaped) {
+                    case 'n' -> value.append('\n');
+                    case 't' -> value.append('\t');
+                    case 'r' -> value.append('\r');
+                    case '\\' -> value.append('\\');
+                    case '"' -> value.append('"');
+                    case '\'' -> value.append('\'');
+                    case '0' -> value.append('\0');
+                    default -> {
+                        value.append('\\');
+                        value.append(escaped);
+                    }
+                }
+                advance();
+            } else {
+                value.append(peek());
+                advance();
+            }
         }
 
         if (isAtEnd()) {
@@ -154,8 +183,8 @@ public class Scanner {
         advance();
 
         // Trim the surrounding quotes.
-        String value = source.substring(start + 1, current - 1); // +1, -1 to ingore the ""
-        addToken(STRING, value);
+        // String value = source.substring(start + 1, current - 1); // +1, -1 to ingore the ""
+        addToken(STRING, value.toString());
     }
 
     private void number() {

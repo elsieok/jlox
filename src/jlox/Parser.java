@@ -9,7 +9,7 @@ import static jlox.TokenType.*;
 public class Parser {
     private static class ParseError extends RuntimeException {}
 
-    private final List<Token> tokens;
+     final List<Token> tokens;
     private int current = 0;
     private int loopDepth = 0; // Track loop depth for break/continue
 
@@ -37,7 +37,8 @@ public class Parser {
 
     private Stmt declaration() {
         try {
-            if (match(FUN)) return funDeclaration("function");
+            if (match(CLASS)) return classDeclaration();
+            if (match(FUN)) return function("function");
             if (match(VAR)) return varDeclaration();
 
             return statement();
@@ -47,28 +48,54 @@ public class Parser {
         }
     }
 
-    private Stmt funDeclaration(String kind) {
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect class name.");
+        consume(LEFT_BRACE, "Expect '{' before class body.");
+
+        List<Stmt.Function> methods = new ArrayList<>();
+        List<Stmt.Function> staticMethods = new ArrayList<>();
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
+            if (match(STATIC)){ // challenge 12.1
+                staticMethods.add(function("staticMethod"));
+            } else {
+                methods.add(function("method"));
+            }
+            
+        }
+
+        consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, staticMethods, methods);
+    }
+
+    private Stmt.Function function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
 
-        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
         List<Token> parameters = new ArrayList<>();
-        if (!check(RIGHT_PAREN)) {
-            do {
-                if (parameters.size() >= 255) {
-                    error(peek(), "Can't have more than 255 parameters.");
-                }
+        if (match(LEFT_PAREN)) {
+            if (!check(RIGHT_PAREN)) {
+                do {
+                    if (parameters.size() >= 255) {
+                        error(peek(), "Can't have more than 255 parameters.");
+                    }
 
-                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
-                
-            } while (match(COMMA));
+                    parameters.add(consume(IDENTIFIER, "Expect parameter name."));
+                    
+                } while (match(COMMA));
+            }
+            
+            consume(RIGHT_PAREN, "Expect ')' after parameters.");
+            consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+            List<Stmt> body = block();
+
+            return new Stmt.Function(name, parameters, body);
+        } else { // challenge 12.2
+            consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+            List<Stmt> body = block();
+
+            return new Stmt.Function(name, null, body);
         }
-        
-        consume(RIGHT_PAREN, "Expect ')' after parameters.");
 
-        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-        List<Stmt> body = block();
-
-        return new Stmt.Function(name, parameters, body);
     }
 
     private Stmt varDeclaration() {
@@ -269,9 +296,11 @@ public class Parser {
             Token equals = previous();
             Expr value = assignment();
 
-            if (expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable)expr).name;
+            if (expr instanceof Expr.Variable variable) {
+                Token name = variable.name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof Expr.Get get){
+                return new Expr.Set(get.object, get.name, value);
             }
 
             error(equals, "Invalid assignment target.");
@@ -397,6 +426,9 @@ public class Parser {
         while (true) { 
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
+            } else if (match(DOT)) {
+                Token name = consume(IDENTIFIER,"Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
             } else {
                 break;
             }
@@ -446,24 +478,24 @@ public class Parser {
     }
 
     private Expr primary() {
+        if (match(TRUE)) return new Expr.Literal(true);
+        if (match(FALSE)) return new Expr.Literal(false);
+        if (match(NIL)) return new Expr.Literal(null);
+        if (match(THIS)) return new Expr.This(previous());
         if (match(FUN)) return functionExpr("function");
 
         if (match(NUMBER, STRING)) {
             return new Expr.Literal(previous().literal);
         }
 
-        if (match(TRUE)) return new Expr.Literal(true);
-        if (match(FALSE)) return new Expr.Literal(false);
-        if (match(NIL)) return new Expr.Literal(null);
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
+        }
 
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after exression.");
             return new Expr.Grouping(expr);
-        }
-
-        if (match(IDENTIFIER)) {
-            return new Expr.Variable(previous());
         }
 
         throw error(peek(), "Expect expression.");
@@ -533,41 +565,43 @@ public class Parser {
 
 
     /* GRAMMAR
-     * program         → declaration* EOF
-     * declaration     → funDecl | varDecl | statement
-     * funDecl         → "fun" IDENTIFIER "(" parameters? ")" block
-     * parameters      → IDENTIFIER ( "," IDENTIFIER )*
-     * varDecl         → "var" IDENTIFIER ( "=" expression )? ";"
-     * statement       → breakStmt | continueStmt | exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
-     * breakStmt       → "break" ";"
-     * continueStmt    → "continue" ";"
-     * exprStmt        → expression ";"
-     * forStmt         → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression ")" statement
-     * ifStmt          → "if" "(" expression ")" statement ( "else" statement )?
-     * printStmt       → "print" expression ";"
-     * returnStmt      → "return" expression? ";"
-     * whileStmt       → "while" "(" expression ")" statement
-     * block           → "{" declaration* "}"
+     * program        → declaration* EOF
+     * declaration    → classDecl | funDecl | varDecl | statement
+     * classDecl      → "class" IDENTIFIER "{" function* "}"
+     * funDecl        → "fun" function
+     * function       → "static"? IDENTIFIER ( "(" parameters? ")" )? block // challenge 12.1
+     * parameters     → IDENTIFIER ( "," IDENTIFIER )*
+     * varDecl        → "var" IDENTIFIER ( "=" expression )? ";"
+     * statement      → breakStmt | continueStmt | exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block
+     * breakStmt      → "break" ";"
+     * continueStmt   → "continue" ";"
+     * exprStmt       → expression ";"
+     * forStmt        → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression ")" statement
+     * ifStmt         → "if" "(" expression ")" statement ( "else" statement )?
+     * printStmt      → "print" expression ";"
+     * returnStmt     → "return" expression? ";"
+     * whileStmt      → "while" "(" expression ")" statement
+     * block          → "{" declaration* "}"
      * 
-     * expression      → comma
-     * comma           → conditional ( "," conditional )*      // Challenge 6.1
-     * conditional     → assignment ( "?" expression ":" conditional )?      // Challenge 6.1
-     * assignment      → IDENTIFIER "=" assignment | logic_or
-     * logic_or        → logic_and ( "or" logic_and )*
-     * logic_and       → equality ( "and" equality )*
-     * equality        → comparison ( ( "!=" | "==" ) comparison )*
-     * comparison      → term ( ( ">" | ">=" | "<" | "<=" ) term )*
-     * term            → factor ( ( "+" | "-" ) factor )*
-     * factor          → unary ( ( "*" | "/" | "%" ) unary )*
-     * unary           → ( "!" | "-" ) unary | call
-     * call            → primary ( "(" arguments? ")" )*
-     * arguments       → conditional ( "," conditional )*      // had to change this to stop the comma rule from messing up argument parsing
-     * functionExpr    → "fun" "(" parameters? ")" block      // Challenge 10.2
-     * primary         → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER
+     * expression     → comma
+     * comma          → conditional ( "," conditional )*      // Challenge 6.1
+     * conditional    → assignment ( "?" expression ":" conditional )?      // Challenge 6.1
+     * assignment     → ( call "." )? IDENTIFIER "=" assignment | logic_or
+     * logic_or       → logic_and ( "or" logic_and )*
+     * logic_and      → equality ( "and" equality )*
+     * equality       → comparison ( ( "!=" | "==" ) comparison )*
+     * comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )*
+     * term           → factor ( ( "+" | "-" ) factor )*
+     * factor         → unary ( ( "*" | "/" | "%" ) unary )*
+     * unary          → ( "!" | "-" ) unary | call
+     * call           → primary ( "(" arguments? ")" | "." IDENTIFIER )*
+     * arguments      → conditional ( "," conditional )*      // had to change this to stop the comma rule from messing up argument parsing
+     * functionExpr   → "fun" "(" parameters? ")" block      // Challenge 10.2
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER
      * 
-     * ?: optional, zero or one occurance
-     * *: zero or more occurances
-     * +: one or more occurances
+     * ? : optional, zero or one occurance
+     * * : zero or more occurances
+     * + : one or more occurances
      */
 
 }

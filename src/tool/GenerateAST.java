@@ -18,9 +18,12 @@ public class GenerateAST {
             "Binary   : Expr left, Token operator, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
             "Function : List<Token> params, List<Stmt> body",
+            "Get      : Expr object, Token name",
             "Grouping : Expr expression",
             "Literal  : Object value",
             "Logical  : Expr left, Token operator, Expr right",
+            "Set      : Expr object, Token name, Expr value",
+            "This     : Token keyword",
             "Ternary  : Expr condition, Token op1, Expr thenExpr, Token op2, Expr elseExpr", // Challenge 6.1
             "Unary    : Token operator, Expr right",
             "Variable : Token name"
@@ -29,6 +32,7 @@ public class GenerateAST {
         defineAST(outputDir, "Stmt", Arrays.asList(
             "Block        : List<Stmt> statements",
             "Break        : ", // Challenge 9.3
+            "Class        : Token name, List<Stmt.Function> staticMethods, List<Stmt.Function> methods", // challenge 12.1
             "Continue     : ", // Challenge 9.3
             "Expression   : Expr expression",
             "ForDesugared : Expr condition, Stmt increment, Stmt body",

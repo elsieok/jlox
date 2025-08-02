@@ -183,9 +183,41 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Challenge 10.2
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
-        FunctionDeclarationAdapter someFunctionExpr = new FunctionDeclarationAdapter(expr);
-        jloxFunction function = new jloxFunction(someFunctionExpr, environment);
+        FunctionDeclaration someFunctionExpr = new FunctionDeclaration(expr);
+        jloxFunction function = new jloxFunction(someFunctionExpr, environment, false, someFunctionExpr.getParams() == null);
         return function;
+    }
+
+    @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+
+        if (object instanceof jloxInstance instance) {
+            jloxFunction method = instance.getKlass().findMethod(expr.name.lexeme);
+            if (method != null) {
+                if (method.getIsGetter()) {
+                    return method.bind(instance).call(this, null);
+                } else {
+                    return method.bind(instance);
+                }
+            }
+
+            return instance.get(expr.name);
+        }
+
+        if (object instanceof jloxClass klass) {
+            jloxFunction staticMethod = klass.findMethod(expr.name.lexeme);
+            if (staticMethod != null) {
+                if (staticMethod.getIsGetter()) {
+                    return staticMethod.call(this, List.of());
+                } else{
+                    return staticMethod;
+                }
+            }
+            return klass.get(expr.name);
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have properties.");
     }
 
     @Override
@@ -212,6 +244,20 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+
+        if (object instanceof jloxInstance instance) {
+            Object value = evaluate(expr.value);
+            instance.set(expr.name, value);
+            return value;
+        }
+
+        throw new RuntimeError(expr.name, "Only instances have fields.");
+
+    }
+
+    @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
         Object condition = evaluate(expr.condition);
 
@@ -220,6 +266,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         } else {
             return evaluate(expr.elseExpr);
         }
+    }
+
+    @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr.keyword, expr);
     }
 
     @SuppressWarnings("incomplete-switch")
@@ -257,6 +308,37 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         throw new BreakException();
     }
 
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+
+
+        // challenge 12.1
+        Map<String, jloxFunction> staticMethods = new HashMap<>();
+        for (Stmt.Function staticMethod : stmt.staticMethods) {
+            FunctionDeclaration someMethod = new FunctionDeclaration(staticMethod);
+            jloxFunction function = new jloxFunction(someMethod, environment, staticMethod.name.lexeme.equals("init"), someMethod.getParams() == null);
+            staticMethods.put(staticMethod.name.lexeme, function);
+        }
+
+        // challenge 12.1
+        jloxClass metaclass = new jloxClass(stmt.name.lexeme + "Meta", staticMethods, null);
+        // static methods are instance methods on the metaclass
+        // static methods on the metaclass are usually empty
+        // metaclass's class can be null or point to a base Class class
+
+        Map<String, jloxFunction> methods = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            FunctionDeclaration someMethod = new FunctionDeclaration(method);
+            jloxFunction function = new jloxFunction(someMethod, environment, method.name.lexeme.equals("init"), someMethod.getParams() == null);
+            methods.put(method.name.lexeme, function);
+        }
+
+        jloxClass klass = new jloxClass(stmt.name.lexeme, methods, metaclass);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+
     @Override // Challenge 9.3
     public Void visitContinueStmt(Stmt.Continue stmt) {
         throw new ContinueException();
@@ -290,8 +372,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
         // Challenge 10.2, syntax changed from original
-        FunctionDeclarationAdapter someFunctionExpr = new FunctionDeclarationAdapter(stmt);
-        jloxFunction function = new jloxFunction(someFunctionExpr, environment);
+        FunctionDeclaration someFunctionStmt = new FunctionDeclaration(stmt);
+        jloxFunction function = new jloxFunction(someFunctionStmt, environment, false, false);
         environment.define(stmt.name.lexeme, function);
         return null;
     }

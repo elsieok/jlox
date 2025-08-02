@@ -6,10 +6,29 @@ class jloxFunction implements jloxCallable{
     // Challenge 10.2 syntax changed
     private final FunctionDeclaration declaration;
     private final Environment closure;
+    private final boolean isInitialiser;
+    private final boolean isGetter;
 
-    jloxFunction(FunctionDeclaration declaration, Environment closure) {
+    jloxFunction(FunctionDeclaration declaration, Environment closure, boolean isInitialiser, boolean isGetter) {
         this.declaration = declaration;
         this.closure = closure;
+        this.isInitialiser = isInitialiser;
+        if (isInitialiser) {
+            this.isGetter = false;
+        } else {
+            this.isGetter = isGetter;
+        }
+        
+    }
+
+    jloxFunction bind(jloxInstance instance) {
+        Environment environment = new Environment();
+        environment.define("this", instance);
+        return new jloxFunction(declaration, environment, isInitialiser, isGetter);
+    }
+
+    boolean getIsGetter() {
+        return isGetter;
     }
 
     @Override
@@ -17,16 +36,22 @@ class jloxFunction implements jloxCallable{
         Environment environment = new Environment(closure);
 
         List<Token> params = declaration.getParams();
-        for (int i = 0; i < params.size(); i++) {
-            environment.define(params.get(i).lexeme, arguments.get(i));
+        if (!isGetter) { // challenge 12.2
+            for (int i = 0; i < params.size(); i++) {
+                environment.define(params.get(i).lexeme, arguments.get(i));
+            }
         }
 
         try {
             interpreter.executeBlock(declaration.getBody(), environment);
         } catch (Return returnValue) {
+            if (isInitialiser) return closure.getAt(0, "this");
+
+
             return returnValue.value;
         }
 
+        if (isInitialiser) return closure.getAt(0, "this");
         return null;
     }
 
@@ -39,6 +64,6 @@ class jloxFunction implements jloxCallable{
     public String toString() {
         Token name = declaration.getName();
         return "<fn " + (name == null ? "anonymous" : name.lexeme) + ">";
-    }
+    }    
 
 }

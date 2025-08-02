@@ -1,11 +1,61 @@
-var a = "global";
-{
-  fun showA() {
-    print a;
+class Test {
+  // Constructor
+  init(value) {
+    this.value = value;
   }
 
-  showA();
-  var a = "block";
-  showA();
-  // print a;
+  // Regular instance method
+  regularMethod() {
+    return "regular method called with value " + this.value;
+  }
+
+  // Regular instance getter (parameterless method)
+  regularGetter {
+    return "regular getter called with value " + this.value;
+  }
+
+  // Static method
+  static staticMethod() {
+    return "static method called";
+  }
+
+  // Static getter (parameterless static method)
+  static staticGetter {
+    return "static getter called";
+  }
+
+  // The following lines should cause an error if your interpreter disallows method/getter name conflicts
+
+  // Uncomment to test name conflict error on instance side:
+  /*
+  conflictName() {
+    return "method";
+  }
+
+  conflictName {
+    return "getter";
+  }
+  */
+
+  // Uncomment to test name conflict error on static side:
+  /*
+  static conflictStatic() {
+    return "static method";
+  }
+
+  static conflictStatic {
+    return "static getter";
+  }
+  */
 }
+
+print Test.staticMethod();      // static method called
+print Test.staticGetter;        // static getter called
+
+var obj = Test("42");
+print obj.regularMethod();      // regular method called with value 42
+print obj.regularGetter;        // regular getter called with value 42
+
+// Change the instance value and re-check getter reflects change
+obj.value = "100";
+print obj.regularGetter;        // regular getter called with value 100

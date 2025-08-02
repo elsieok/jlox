@@ -32,8 +32,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private enum FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        INITIALISER,
+        METHOD,
+        STATIC,
     }
+
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+
+    private ClassType currentClass = ClassType.NONE;
 
     void resolve(List<Stmt> statements) {
         for (Stmt statement : statements) {
@@ -54,11 +64,14 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         currentFunction = type;
 
         beginScope();
-        
-        for (Token param : function.params) {
-            declare(param);
-            define(param);
+    
+        if (function.params != null) {
+            for (Token param : function.params) {
+                declare(param);
+                define(param);
+            }
         }
+
 
         resolve(function.body);
         endScope();
@@ -91,6 +104,53 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitBreakStmt(Stmt.Break stmt) {
+        return null;
+    }
+
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
+        declare(stmt.name);
+        define(stmt.name);
+        
+        beginScope();
+        scopes.peek().put("this", new VariableInfo(stmt.name, true, true));
+
+        Map<String, FunctionType> staticMethodKinds = new HashMap<>();
+        for (Stmt.Function staticMethod : stmt.staticMethods) {
+            FunctionType declaration = FunctionType.STATIC;
+
+            FunctionType existing = staticMethodKinds.get(staticMethod.name.lexeme);
+            if (existing != null) {
+                jlox.error(staticMethod.name, "Cannot have duplicate static methods.");
+            }
+            staticMethodKinds.put(staticMethod.name.lexeme, declaration);
+
+
+            resolveFunction(staticMethod, declaration);
+        }
+
+        Map<String, FunctionType> methodKinds = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.name.lexeme.equals("init")) {
+                declaration = FunctionType.INITIALISER;
+            }
+
+            FunctionType existing = methodKinds.get(method.name.lexeme);
+            if (existing != null) {
+                jlox.error(method.name, "Cannot have duplicate methods.");
+            }
+            methodKinds.put(method.name.lexeme, declaration);
+
+            resolveFunction(method, declaration);
+        }
+
+        endScope();
+        
+        currentClass = enclosingClass;
         return null;
     }
 
@@ -141,8 +201,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (currentFunction == FunctionType.NONE) {
             jlox.error(stmt.keyword, "Can't return from top-level code.");
         }
+
         if (stmt.value != null) {
-        resolve(stmt.value);
+            if (currentFunction == FunctionType.INITIALISER) {
+                jlox.error(stmt.keyword, "Can't return a value from an initializer.");
+            }
+
+            resolve(stmt.value);
         }
 
         return null;
@@ -199,6 +264,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitGetExpr(Expr.Get expr) {
+        resolve(expr.object);
+        return null;
+    }
+    
+    @Override
     public Void visitGroupingExpr(Expr.Grouping expr) {
         resolve(expr.expression);
         return null;
@@ -217,11 +288,28 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
     public Void visitTernaryExpr(Expr.Ternary expr) {
         resolve(expr.condition);
         resolve(expr.thenExpr);
         resolve(expr.elseExpr);
 
+        return null;
+    }
+
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            jlox.error(expr.keyword, "Can't use 'this' outside of a class.");
+        }
+
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
@@ -252,14 +340,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     private void endScope() {
-        Map<String, VariableInfo> scope = scopes.pop();
-        for (Map.Entry<String, VariableInfo> entry : scope.entrySet()) {
-            VariableInfo info = entry.getValue();
+        scopes.pop();
 
-            if (!info.used) {
-                jlox.error(info.token, "Variable declared but never used.");
-            }
-        }
+        // challenge 11.3, commented out because it's annoying
+        // Map<String, VariableInfo> scope = scopes.pop();
+        // for (Map.Entry<String, VariableInfo> entry : scope.entrySet()) {
+        //     VariableInfo info = entry.getValue();
+
+        //     if (!info.used) {
+        //         jlox.error(info.token, "Variable declared but never used.");
+        //     }
+        // }
+        
     }
 
     private void declare(Token name) {

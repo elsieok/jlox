@@ -15,8 +15,10 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     // challenge 11.3
     class VariableInfo {
+        @SuppressWarnings("unused")
         Token token;
         boolean defined;
+        @SuppressWarnings("unused")
         boolean used;
 
         VariableInfo (Token token, boolean defined, boolean used){

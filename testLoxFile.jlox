@@ -153,4 +153,23 @@ Weird.name();    // Static name
 
 // Shadow().val(); // Uncomment to test getter-method collision (should error or override depending on implementation)
 
+// === Clock ===
+print clock();
+
+// === Arrays ===
+
+var array = Array(5);
+print array;
+print array.length;
+print array.get(0);
+
+for (var i = 0; i < array.length; i = i + 1) {
+  array.set(i, i + 4);
+}
+
+print array;
+print array.length;
+print array.get(0);
+
+
 print "=== END OF PART II TEST SUITE ===";

@@ -34,9 +34,18 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 return (double)System.currentTimeMillis() / 1000.0;
             }
 
+        });
+        
+        globals.define("Array", new jloxCallable() {
             @Override
-            public String toString() {
-                return "<native fn>";
+            public int arity() {
+                return 1;
+            }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                int size = (int)(double)arguments.get(0);
+                return new jloxArray(size);
             }
         });
 
@@ -224,6 +233,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitGetExpr(Expr.Get expr) {
         Object object = evaluate(expr.object);
+
+        if (object instanceof jloxArray array) {
+            return array.get(expr.name);
+        }
 
         if (object instanceof jloxInstance instance) {
             jloxFunction method = instance.getKlass().findMethod(expr.name.lexeme);

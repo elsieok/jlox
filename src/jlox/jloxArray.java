@@ -16,10 +16,6 @@ class jloxArray extends jloxInstance{
         elements = list;
     }
 
-    Object[] getElements() {
-        return elements;
-    }
-
     @Override
     Object get(Token name) {
         switch (name.lexeme) {

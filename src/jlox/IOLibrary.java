@@ -6,10 +6,10 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-public class IOLibrary {
+class IOLibrary {
     private static final Scanner scanner = new Scanner(System.in);
 
-    public static class input implements jloxCallable {
+    static class input implements jloxCallable {
         @Override
         public int arity() {
             return 0;
@@ -31,7 +31,7 @@ public class IOLibrary {
 
     }
 
-    public static class inputPrompt implements jloxCallable {
+    static class inputPrompt implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -67,7 +67,7 @@ public class IOLibrary {
 
     }
     
-    public static class readFile implements jloxCallable {
+    static class readFile implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -95,7 +95,7 @@ public class IOLibrary {
 
     }
     
-    public static class writeFile implements jloxCallable {
+    static class writeFile implements jloxCallable {
         @Override
         public int arity() {
             return 2;
@@ -113,7 +113,7 @@ public class IOLibrary {
             try {
                 Files.write(Paths.get((String)filename), stringify(content).getBytes());
                 return null;
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new RuntimeError(null, "Could not write file: " + e.getMessage());
             }
         }
@@ -137,7 +137,7 @@ public class IOLibrary {
 
     }
     
-    public static class appendFile implements jloxCallable {
+    static class appendFile implements jloxCallable {
         @Override
         public int arity() {
             return 2;
@@ -182,7 +182,7 @@ public class IOLibrary {
 
     }
     
-    public static class fileExists implements jloxCallable {
+    static class fileExists implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -206,7 +206,7 @@ public class IOLibrary {
 
     }
     
-    public static class deleteFile implements jloxCallable {
+    static class deleteFile implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -234,7 +234,7 @@ public class IOLibrary {
 
     }
     
-    public static class printNoNewline implements jloxCallable {
+    static class printNoNewline implements jloxCallable {
         @Override
         public int arity() {
             return 1;

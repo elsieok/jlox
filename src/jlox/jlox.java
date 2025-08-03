@@ -122,8 +122,12 @@ public class jlox{
         }
     }
     
-    static void runtimeError(RuntimeError error) {
-        System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
+    static void runtimeError(RuntimeError error) {  
+        if (error.token != null) {
+            System.err.println(error.getMessage() + "\n[line " + error.token.line + "]");
+        } else {
+            System.err.println(error.getMessage() + "\n[line unknown]");
+        }
         hadRuntimeError = true;
     }
 

@@ -209,11 +209,11 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         return null;
     }
 
-    @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        resolve(stmt.expression);
-        return null;
-    }
+    // @Override
+    // public Void visitPrintStmt(Stmt.Print stmt) {
+    //     resolve(stmt.expression);
+    //     return null;
+    // }
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {
@@ -252,6 +252,14 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitArrayExpr(Expr.Array expr) {
+        for (Expr element : expr.elements) {
+            resolve(element);
+        }
+        return null;
+    }
+
+    @Override
     public Void visitAssignExpr(Expr.Assign expr) {
         resolve(expr.value);
         resolveLocal(expr, expr.name);
@@ -270,7 +278,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         resolve(expr.callee);
 
         for (Expr argument : expr.arguments) {
-        resolve(argument);
+            resolve(argument);
         }
 
         return null;

@@ -3,14 +3,14 @@ package jlox;
 import java.util.List;
 import java.util.Random;
 
-public class MathsLibrary {
+class MathsLibrary {
     // mathematical constants
-    public static final double PI = Math.PI;
-    public static final double E = Math.E;
+    static final double PI = Math.PI;
+    static final double E = Math.E;
 
     private static final Random random = new Random();
 
-    public static class sqrt implements jloxCallable{
+    static class sqrt implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -35,9 +35,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn sqrt>";
         }
+    
     }
 
-    public static class pow implements jloxCallable{
+    static class pow implements jloxCallable{
         @Override
         public int arity() {
             return 2;
@@ -65,7 +66,7 @@ public class MathsLibrary {
         }
     }
 
-    public static class abs implements jloxCallable{
+    static class abs implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -86,9 +87,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn abs>";
         }
+    
     }
 
-    public static class floor implements jloxCallable{
+    static class floor implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -109,9 +111,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn floor>";
         }
+    
     }
 
-    public static class ceil implements jloxCallable{
+    static class ceil implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -132,9 +135,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn ceil>";
         }
+    
     }
 
-    public static class random implements jloxCallable{
+    static class random implements jloxCallable{
         @Override
         public int arity() {
             return 0;
@@ -149,9 +153,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn random>";
         }
+    
     }
 
-    public static class randomInt implements jloxCallable{
+    static class randomInt implements jloxCallable{
         @Override
         public int arity() {
             return 2;
@@ -184,9 +189,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn randomInt>";
         }
+    
     }
 
-    public static class sin implements jloxCallable{
+    static class sin implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -207,9 +213,10 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn sin>";
         }
+    
     }
 
-    public static class cos implements jloxCallable{
+    static class cos implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -233,7 +240,7 @@ public class MathsLibrary {
 
     }
 
-    public static class tan implements jloxCallable{
+    static class tan implements jloxCallable{
         @Override
         public int arity() {
             return 1;
@@ -254,6 +261,7 @@ public class MathsLibrary {
         public String toString() {
             return "<native fn tan>";
         }
+    
     }
     
 }

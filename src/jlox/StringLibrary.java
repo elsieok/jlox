@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class StringLibrary {
+class StringLibrary {
 
-    public static class len implements jloxCallable {
+    static class len implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -22,13 +22,14 @@ public class StringLibrary {
             return (double)((String)arg).length();
         }
 
+        @Override
         public String toString() {
             return "<native fn len>";
         }
 
     }
 
-    public static class substr implements jloxCallable {
+    static class substr implements jloxCallable {
         @Override
         public int arity() {
             return 3;
@@ -70,7 +71,7 @@ public class StringLibrary {
 
     }
 
-    public static class toUpper implements jloxCallable {
+    static class toUpper implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -93,7 +94,7 @@ public class StringLibrary {
         }
     }
 
-    public static class toLower implements jloxCallable {
+    static class toLower implements jloxCallable {
         @Override
         public int arity() {
             return 1;
@@ -114,9 +115,10 @@ public class StringLibrary {
         public String toString() {
             return "<native fn toLower>";
         }
+    
     }
 
-    public static class split implements jloxCallable {
+    static class split implements jloxCallable {
         @Override
         public int arity() {
             return 2;
@@ -142,35 +144,7 @@ public class StringLibrary {
         public String toString() {
             return "<native fn split>";
         }
-    }
-
-    public static class stringify implements jloxCallable {
-        @Override
-        public int arity() {
-            return 1;
-        }
-
-        @Override
-        public Object call(Interpreter interpreter, List<Object> arguments) {
-            Object nonString = arguments.get(0);
-            if (nonString == null) {
-                return "nil";
-            }
-            if (nonString instanceof Double) {
-                String text = nonString.toString();
-                if (text.endsWith(".0")) {
-                    text = text.substring(0, text.length() - 2);
-                }
-                return text;
-            }
-            return nonString.toString();
-        }
-
-        @Override
-        public String toString() {
-            return "<native fn toString>";
-        }
-
+    
     }
     
 }

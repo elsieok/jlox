@@ -122,7 +122,7 @@ public class Parser {
         if (match(CONTINUE)) return continueStatememt();
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
-        if (match(PRINT)) return printStatement();
+        // if (match(PRINT)) return printStatement();
         if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
@@ -214,11 +214,11 @@ public class Parser {
         return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
-    private Stmt printStatement() {
-        Expr value = expression();
-        consume(SEMICOLON, "Expect ';' after value.");
-        return new Stmt.Print(value);
-    }
+    // private Stmt printStatement() {
+    //     Expr value = expression();
+    //     consume(SEMICOLON, "Expect ';' after value.");
+    //     return new Stmt.Print(value);
+    // }
 
     private Stmt returnStatement() {
         Token keyword = previous();
@@ -512,6 +512,19 @@ public class Parser {
             return new Expr.Super(keyword, method);
         }
 
+        if (match(LEFT_BRACKET)) {
+            List<Expr> elements = new ArrayList<>();
+            if(!(check(RIGHT_BRACKET))) {
+                do {
+                    elements.add(conditional());
+                } while (match(COMMA));
+            }
+
+            consume(RIGHT_BRACKET, "Expect ']' after elements.");
+
+            return new Expr.Array(elements);
+        }
+
         throw error(peek(), "Expect expression.");
     }
 
@@ -611,7 +624,7 @@ public class Parser {
      * call           → primary ( "(" arguments? ")" | "." IDENTIFIER )*
      * arguments      → conditional ( "," conditional )*      // had to change this to stop the comma rule from messing up argument parsing
      * functionExpr   → "fun" "(" parameters? ")" block      // Challenge 10.2
-     * primary        → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER | "super" "." IDENTIFIER
+     * primary        → NUMBER | STRING | "true" | "false" | "nil" | functionExpr | "(" expression ")" | IDENTIFIER | "super" "." IDENTIFIER | "[" ( expression ( "," expression )* )? "]"
      * 
      * ? : optional, zero or one occurance
      * * : zero or more occurances

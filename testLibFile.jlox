@@ -1,9 +1,10 @@
-// String operations
+print("--- String operations ---");
 var name = prompt("What's your name? ");
 print("Hello, " + toUpper(name) + "!");
 print("Your name has " + stringify(len(name)) + " characters.");
 
-// Math operations
+
+print("\n\n--- Math operations ---");
 var radius = 5.0;
 var area = PI * pow(radius, 2);
 print("Circle area: " + stringify(area));
@@ -11,7 +12,8 @@ print("Circle area: " + stringify(area));
 var num = randomInt(1, 10);
 print("Random number: " + stringify(num));
 
-// File operations
+
+print("\n\n--- File operations ---");
 writeFile("data.txt", "Hello, World!\nThis is a test file.");
 var content = readFile("data.txt");
 print("File content:");
@@ -23,3 +25,25 @@ if (fileExists("data.txt")) {
 } else {
     print("File not found.");
 }
+
+
+print("\n\n--- Array Tests ---");
+
+var arr = [1, 2, 3];
+print(arr);
+print("Original array: " + stringify(arr));
+
+// sort (numbers)
+var nums = [5.0, 1.0, 4.0, 2.0, 3.0];
+var sortedNums = nums.sort();
+print("sort (numbers): " + stringify(sortedNums)); // [1, 2, 3, 4, 5]
+
+// sort (strings)
+var strs = ["banana", "jackfruit", "apple", "cherry"];
+var sortedStrs = strs.sort();
+print("sort (strings): " + stringify(sortedStrs)); // ["apple", "banana", "cherry"]
+
+// sort (mixed)
+var mixed = ["banana", 0, "jackfruit", "apple", "cherry", 2];
+var sortedMixedStrs = mixed.sort();
+print("sort (mixed): " + stringify(mixed));

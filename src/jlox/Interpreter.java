@@ -23,31 +23,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     Interpreter() {
-        globals.define("clock", new jloxCallable() {
-            @Override
-            public int arity() {
-                return 0;
-            }
+        // Core library
+        globals.define("clock", new CoreLibrary.clock());
+        globals.define("print", new CoreLibrary.print());
+        globals.define("stringify", new CoreLibrary.stringify());
 
-            @Override
-            public Object call(Interpreter interpreter, List<Object> arguments) {
-                return (double)System.currentTimeMillis() / 1000.0;
-            }
-
-        });
-        
-        globals.define("Array", new jloxCallable() {
-            @Override
-            public int arity() {
-                return 1;
-            }
-
-            @Override
-            public Object call(Interpreter interpreter, List<Object> arguments) {
-                int size = (int)(double)arguments.get(0);
-                return new jloxArray(size);
-            }
-        });
 
         // String library
         globals.define("len", new StringLibrary.len());
@@ -55,7 +35,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         globals.define("toUpper", new StringLibrary.toUpper());
         globals.define("toLower", new StringLibrary.toLower());
         globals.define("split", new StringLibrary.split());
-        globals.define("stringify", new StringLibrary.stringify());
 
         // Maths library
         globals.define("PI", MathsLibrary.PI);
@@ -80,6 +59,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         globals.define("fileExists", new IOLibrary.fileExists());
         globals.define("deleteFile", new IOLibrary.deleteFile());
         globals.define("printn", new IOLibrary.printNoNewline());
+    
     }
 
     void interpret(List<Stmt> statements) {
@@ -103,6 +83,18 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
     }
 
+    @Override
+    public Object visitArrayExpr(Expr.Array expr) {
+        List<Object> list = new ArrayList<>();
+        for (Expr element : expr.elements) {
+            list.add(evaluate(element));
+        }
+
+        Object[] array = list.toArray();
+
+        return new jloxArray(array);
+    }
+    
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
@@ -139,10 +131,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                 if (left instanceof Double && right instanceof Double) {
                     return (double)left + (double)right;
                 }
-                if (left instanceof String && right instanceof String) {
-                    return (String)left + (String)right;
+                if (left instanceof String || right instanceof String) {
+                    return CoreLibrary.stringify(left) + CoreLibrary.stringify(right);
                 }
-                throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
+                throw new RuntimeError(expr.operator, "Addition requires two number operator, string concanentation requires at least one string object.");
             }
             case MINUS -> {
                 checkNumberOperands(expr.operator, left, right);
@@ -467,12 +459,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         return null;
     }
     
-    @Override
-    public Void visitPrintStmt(Stmt.Print stmt) {
-        Object value = evaluate(stmt.expression);
-        System.out.println(stringify(value));
-        return null;
-    }
+    // @Override
+    // public Void visitPrintStmt(Stmt.Print stmt) {
+    //     Object value = evaluate(stmt.expression);
+    //     System.out.println(stringify(value));
+    //     return null;
+    // }
 
     @Override
     public Void visitReturnStmt(Stmt.Return stmt) {

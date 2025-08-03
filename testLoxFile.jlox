@@ -1,14 +1,14 @@
 // === CLASS INHERITANCE & METHOD OVERRIDING ===
 class Animal {
   speak() {
-    print "Animal noise";
+    print("Animal noise");
   }
 }
 
 class Dog < Animal {
   speak() {
     super.speak();
-    print "Woof!";
+    print("Woof!");
   }
 }
 
@@ -21,7 +21,7 @@ class Person {
   }
 
   sayName() {
-    print this.name;
+    print(this.name);
   }
 }
 
@@ -31,7 +31,7 @@ p.sayName(); // Elsie
 // === STATIC METHODS & STATIC GETTERS ===
 class Util {
   static greet() {
-    print "Hello from static!";
+    print("Hello from static!");
   }
 
   static time {
@@ -40,12 +40,16 @@ class Util {
 }
 
 Util.greet();       // Hello from static!
-print Util.time;    // noon
+print(Util.time);    // noon
 
 // === INSTANCE GETTERS ===
 class Circle {
   init(radius) {
     this.radius = radius;
+  }
+
+  diameter(value) {
+    this.radius = value / 2;
   }
 
   area {
@@ -54,14 +58,16 @@ class Circle {
 }
 
 var c = Circle(2);
-print c.area; // Should print 12.56
+print(c.area); // Should print 12.56
+c.diameter(12);
+print(c.area);
 
 // === ANONYMOUS FUNCTIONS & HIGHER-ORDER FUNCTIONS ===
 fun makeCounter() {
   var count = 0;
   return fun() {
     count = count + 1;
-    print count;
+    print(count);
   };
 }
 
@@ -82,12 +88,12 @@ while (i < 10) {
     break;
   }
 
-  print i; // Should print 1, 2, 4, 5
+  print(i); // Should print 1, 2, 4, 5
 }
 
 // === FUNCTION EXPRESSIONS ===
 var say = fun(msg) {
-  print msg;
+  print(msg);
 };
 
 say("Function expressions are fun!");
@@ -97,7 +103,7 @@ fun add(a, b) {
   return a + b;
 }
 
-print add(2, 3); // 5
+print(add(2, 3)); // 5
 
 // === CLOSURES ===
 fun makeAdder(x) {
@@ -107,16 +113,16 @@ fun makeAdder(x) {
 }
 
 var addFive = makeAdder(5);
-print addFive(10); // 15
+print(addFive(10)); // 15
 
 // === NESTED SCOPES ===
 {
   var outer = "outside";
   {
     var inner = "inside";
-    print outer + " and " + inner; // outside and inside
+    print(outer + " and " + inner); // outside and inside
   }
-  // print inner; // should error if uncommented
+  // print(inner); // should error if uncommented
 }
 
 // === DUPLICATE METHODS (should error) ===
@@ -128,11 +134,11 @@ print addFive(10); // 15
 // === STATIC & INSTANCE NAMING COLLISIONS ===
 class Weird {
   static name() {
-    print "Static name";
+    print("Static name");
   }
 
   name() {
-    print "Instance name";
+    print("Instance name");
   }
 }
 
@@ -147,29 +153,29 @@ Weird.name();    // Static name
 //  }
 //
 //  val() {
-//    print "method";
+//    print("method");
 //  }
 //}
 
 // Shadow().val(); // Uncomment to test getter-method collision (should error or override depending on implementation)
 
 // === Clock ===
-print clock();
+print(clock());
 
 // === Arrays ===
 
 var array = Array(5);
-print array;
-print array.length;
-print array.get(0);
+print(array);
+print(array.length);
+print(array.get(0));
 
 for (var i = 0; i < array.length; i = i + 1) {
   array.set(i, i + 4);
 }
 
-print array;
-print array.length;
-print array.get(0);
+print(array);
+print(array.length);
+print(array.get(0));
 
 
-print "=== END OF PART II TEST SUITE ===";
+print("=== END OF PART II TEST SUITE ===");

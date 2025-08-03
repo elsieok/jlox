@@ -27,6 +27,9 @@ runf:
 runfl:
 	java -cp $(BIN_DIR) jlox.jlox testLibFile.jlox
 
+runfp:
+	java -cp $(BIN_DIR) jlox.jlox testPrintFunFile.jlox
+
 # Clean compiled files
 clean:
 	rm -rf $(BIN_DIR)/*

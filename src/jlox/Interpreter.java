@@ -27,6 +27,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         globals.define("clock", new CoreLibrary.clock());
         globals.define("print", new CoreLibrary.print());
         globals.define("stringify", new CoreLibrary.stringify());
+        globals.define("Array", new CoreLibrary.Array());
+
 
 
         // String library

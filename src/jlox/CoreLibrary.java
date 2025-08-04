@@ -65,6 +65,25 @@ class CoreLibrary {
 
     }
   
+    static class Array implements jloxCallable {
+        @Override
+        public int arity() {
+            return 1;
+        }
+
+        @Override
+        public Object call(Interpreter interpreter,
+                            List<Object> arguments) {
+            int size = (int)(double)arguments.get(0);
+            return new jloxArray(size);
+        }
+
+        @Override
+        public String toString() {
+            return "<native fn Array>";
+        }
+    }
+
     public static String stringify(Object object) {
         if (object == null) return "nil";
         if (object instanceof Double) {

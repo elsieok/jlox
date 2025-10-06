@@ -12,7 +12,7 @@ A Java implementation of the Lox programming language from [Crafting Interpreter
 ### Option 1: Build and Run Locally
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/jlox.git
+git clone https://github.com/elsieok/jlox.git
 cd jlox
 
 # Build the project
@@ -119,3 +119,4 @@ MIT License
 
 
 Based on the excellent book [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom.
+

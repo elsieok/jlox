@@ -113,8 +113,9 @@ jlox.bat
 
 ## License
 
-[Add your license here]
+MIT License
 
 ## Acknowledgments
+
 
 Based on the excellent book [Crafting Interpreters](https://craftinginterpreters.com/) by Robert Nystrom.
